@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#eef2f4" />
+    <title>眼科病例册 | 广东省人民医院眼科</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="主导航">
+        <div class="brand">
+          <div class="brand-mark">眼</div>
+          <div class="brand-text">
+            <strong>眼科病例册</strong>
+            <span>广东省人民医院眼科</span>
+          </div>
+        </div>
+
+        <nav id="primaryNav" class="primary-nav">
+          <button class="nav-item active" data-view="dashboard" type="button">总览</button>
+          <button class="nav-item" data-view="timeline" type="button">病例时间线</button>
+          <button class="nav-item" data-view="diagnosis" type="button">诊断索引</button>
+          <button class="nav-item" data-view="surgery" type="button">手术与随访</button>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+          <span class="local-status"><i></i>数据保存在本机浏览器</span>
+        </div>
+      </aside>
+
+      <main class="main-shell">
+        <header class="topbar">
+          <div class="mobile-brand">
+            <div class="brand-mark">眼</div>
+            <strong>眼科病例册 · 广东省人民医院眼科</strong>
+          </div>
+          <div class="topbar-actions">
+            <label class="global-search" aria-label="搜索病例">
+              <input id="globalSearch" type="search" placeholder="搜索姓名、病案号或诊断" autocomplete="off" />
+            </label>
+            <button id="exportBtn" class="quiet-btn" type="button">导出数据</button>
+            <button id="addRecordBtn" class="primary-btn" type="button">新增病例</button>
+          </div>
+        </header>
+
+        <section class="page-header">
+          <div>
+            <span id="viewEyebrow" class="eyebrow">广东省人民医院眼科</span>
+            <h1 id="pageTitle">病例总览</h1>
+            <p id="pageSubtitle" class="page-subtitle hidden">把每次接诊留下来，之后还能按诊断和日期回看。</p>
+          </div>
+          <div class="date-stamp" aria-label="当前日期">
+            <strong id="headerDay">20</strong>
+            <span><b id="headerMonth">OCT</b><em id="headerYear">2026</em></span>
+          </div>
+        </section>
+
+        <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+        <section id="dashboardView" class="view-panel">
+          <div class="metric-grid">
+            <article class="metric-card">
+              <span class="metric-label">患者档案</span>
+              <strong id="metricPatients">0</strong>
+              <span id="metricPatientsDelta" class="metric-caption">累计去重患者</span>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">病例记录</span>
+              <strong id="metricRecords">0</strong>
+              <span class="metric-caption">门诊 · 急诊 · 住院 · 随访</span>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">手术病例</span>
+              <strong id="metricSurgeries">0</strong>
+              <span class="metric-caption">已记录手术及操作</span>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">待随访</span>
+              <strong id="metricFollowups">0</strong>
+              <span id="metricFollowupCaption" class="metric-caption">未来 30 天内</span>
+            </article>
+          </div>
+
+          <div class="content-grid overview-grid">
+            <section class="section-block main-column">
+              <div class="section-heading">
+                <div>
+                  <span class="section-kicker">最近病例</span>
+                  <h2>最新记录</h2>
+                </div>
+                <button class="text-btn" data-go-view="timeline" type="button">查看全部</button>
+              </div>
+              <div id="recentList" class="record-list"></div>
+            </section>
+
+            <aside class="quick-column">
+              <section class="section-block compact-block">
+                <div class="section-heading">
+                  <div>
+                    <span class="section-kicker">诊断索引</span>
+                    <h2>诊断概览</h2>
+                  </div>
+                  <button class="icon-btn" data-go-view="diagnosis" type="button" title="打开诊断索引">→</button>
+                </div>
+                <div id="diagnosisMini" class="diagnosis-mini-list"></div>
+              </section>
+
+              <section class="section-block compact-block">
+                <div class="section-heading">
+                  <div>
+                    <span class="section-kicker">随手记</span>
+                    <h2>待补充线索</h2>
+                  </div>
+                </div>
+                <textarea id="quickNote" rows="4" placeholder="记一条之后要补的病例线索"></textarea>
+                <div class="quick-note-footer"><span>自动保存</span><span id="noteSavedAt">—</span></div>
+              </section>
+            </aside>
+          </div>
+        </section>
+
+        <section id="timelineView" class="view-panel hidden">
+          <div class="view-toolbar">
+            <div class="filter-tabs" id="typeFilters">
+              <button id="dateFilterChip" class="filter-tab active hidden" data-clear-date="1" type="button">日期</button>
+            <button class="filter-tab active" data-type-filter="全部" type="button">全部 <span id="allCount">0</span></button>
+            <label class="select-control date-picker">日期<input id="datePick" type="date" /></label>
+              <button class="filter-tab" data-type-filter="门诊" type="button">门诊</button>
+              <button class="filter-tab" data-type-filter="急诊" type="button">急诊</button>
+              <button class="filter-tab" data-type-filter="住院" type="button">住院</button>
+              <button class="filter-tab" data-type-filter="随访" type="button">随访</button>
+              <button class="filter-tab" data-type-filter="疑难" type="button">疑难</button>
+            </div>
+            <label class="select-control">排序
+              <select id="sortSelect">
+                <option value="latest">最新优先</option>
+                <option value="oldest">最早优先</option>
+                <option value="name">按姓名</option>
+              </select>
+            </label>
+          </div>
+          <div id="timelineList" class="timeline-list"></div>
+        </section>
+
+
+        <section id="diagnosisView" class="view-panel hidden">
+          <div class="view-toolbar">
+            <div class="toolbar-title">
+              <span class="section-kicker">诊断索引</span>
+
+            </div>
+            <label class="select-control">排序
+              <select id="diagnosisSort">
+                <option value="count">病例数量</option>
+                <option value="recent">最近记录</option>
+                <option value="alpha">名称</option>
+              </select>
+            </label>
+          </div>
+          <div id="diagnosisGrid" class="diagnosis-grid"></div>
+        </section>
+
+        <section id="surgeryView" class="view-panel hidden">
+          <div class="split-layout">
+            <section class="section-block">
+              <div class="section-heading">
+                <div>
+                  <span class="section-kicker">手术记录</span>
+                  <h2>手术病例</h2>
+                </div>
+                <span id="surgeryCountLabel" class="count-label">0 例</span>
+              </div>
+              <div id="surgeryList" class="record-list"></div>
+            </section>
+            <section class="section-block">
+              <div class="section-heading">
+                <div>
+                  <span class="section-kicker">术后随访</span>
+                  <h2>随访安排</h2>
+                </div>
+                <span id="followupCountLabel" class="count-label">0 例</span>
+              </div>
+              <div id="followupList" class="followup-list"></div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="recordModal" class="modal-backdrop hidden" aria-hidden="true">
+      <div class="modal-dialog form-dialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-head">
+          <div>
+            <span class="section-kicker">病例录入</span>
+            <h2 id="modalTitle">新增病例记录</h2>
+          </div>
+          <button id="closeModal" class="icon-btn close-btn" type="button" title="关闭">×</button>
+        </div>
+        <form id="recordForm">
+          <input id="recordId" type="hidden" />
+          <div class="form-scroll">
+            <label class="difficult-toggle"><input id="recordDifficult" type="checkbox" /><span>标记为疑难病例</span></label>
+            <fieldset class="form-section">
+              <legend>就诊信息</legend>
+              <div class="form-grid form-grid-4">
+                <label class="field">就诊日期 <span class="required">*</span>
+                  <input id="encounterDate" type="date" required />
+                </label>
+                <label class="field">就诊类型 <span class="required">*</span>
+                  <select id="encounterType" required><option>门诊</option><option>急诊</option><option>住院</option><option>随访</option></select>
+                </label>
+                <label class="field">病例状态
+                  <select id="recordStatus"><option>进行中</option><option>已完成</option><option>待复诊</option></select>
+                </label>
+                <label class="field">眼别
+                  <select id="recordEye"><option>OD</option><option>OS</option><option>OU</option><option>未明确</option></select>
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset class="form-section">
+              <legend>患者与诊断</legend>
+              <div class="form-grid form-grid-4">
+                <label class="field span-2">姓名 <span class="required">*</span><input id="patientName" type="text" placeholder="患者姓名" required /></label>
+                <label class="field">住院号 / 病案号<input id="patientNo" type="text" placeholder="如 2026101807" /></label>
+                <label class="field">性别<select id="patientGender"><option>女</option><option>男</option><option>未记录</option></select></label>
+                <label class="field">年龄<input id="patientAge" type="number" min="0" max="130" placeholder="岁" /></label>
+                <label class="field span-3">主要诊断 <span class="required">*</span><input id="recordDiagnosis" type="text" placeholder="输入诊断名称" required /></label>
+              <div class="field span-4"><span>次要诊断（可多个）</span><div class="tag-input"><input id="secondaryInput" type="text" placeholder="输入后回车或点添加" /><button type="button" class="mini-btn" id="addSecondaryBtn">添加</button></div><div id="secondaryList" class="tag-list"></div></div>
+              </div>
+              <label class="field">主诉<textarea id="chiefComplaint" rows="2" placeholder="一句话，如：右眼视物模糊 3 天"></textarea></label>
+            </fieldset>
+
+            <fieldset class="form-section">
+              <legend>专科查体</legend>
+              <div class="exam-head">
+
+                <div class="exam-head-actions">
+                  <button type="button" class="mini-btn" id="examNormalAll">查体未见异常</button>
+                  <button type="button" class="mini-btn" id="examApplyLast">套用上次</button>
+                  <button type="button" class="mini-btn" id="examClearExam">清空</button>
+                </div>
+              </div>
+
+              <div class="exam-vitals">
+                <label class="vital">裸眼视力 OD<input id="examVisionOd" type="text" list="visionOptions" placeholder="1.0" /></label>
+                <label class="vital">裸眼视力 OS<input id="examVisionOs" type="text" list="visionOptions" placeholder="1.0" /></label>
+                <label class="vital">矫正视力 OD<input id="examVisionCorrOd" type="text" list="visionOptions" placeholder="1.0" /></label>
+                <label class="vital">矫正视力 OS<input id="examVisionCorrOs" type="text" list="visionOptions" placeholder="1.0" /></label>
+                <label class="vital">验光 OD<input id="examRefractionOd" type="text" list="refractionOptions" placeholder="-2.00/-0.50×180" /></label>
+                <label class="vital">验光 OS<input id="examRefractionOs" type="text" list="refractionOptions" placeholder="-1.50" /></label>
+                <label class="vital">眼压 OD<input id="examIopOd" type="text" list="iopOptions" placeholder="16" /></label>
+                <label class="vital">眼压 OS<input id="examIopOs" type="text" list="iopOptions" placeholder="16" /></label>
+              </div>
+
+              <div id="examSegments" class="exam-segments"></div>
+
+              <label class="field">补充所见<textarea id="examDetails" rows="2" placeholder="上面没覆盖到的内容，可留空"></textarea></label>
+              <div id="examRecent" class="exam-recent"></div>
+
+              <div class="exam-field">
+                <span class="exam-hint">本次完成的检查</span>
+                <div class="check-grid">
+                  <label class="check-pill"><input type="checkbox" value="视力" data-exam /><span>视力</span></label>
+                  <label class="check-pill"><input type="checkbox" value="验光" data-exam /><span>验光</span></label>
+                  <label class="check-pill"><input type="checkbox" value="眼压" data-exam /><span>眼压</span></label>
+                  <label class="check-pill"><input type="checkbox" value="裂隙灯" data-exam /><span>裂隙灯</span></label>
+                  <label class="check-pill"><input type="checkbox" value="眼底" data-exam /><span>眼底</span></label>
+                  <label class="check-pill"><input type="checkbox" value="OCT" data-exam /><span>OCT</span></label>
+                  <label class="check-pill"><input type="checkbox" value="视野" data-exam /><span>视野</span></label>
+                  <label class="check-pill"><input type="checkbox" value="超声/UBM" data-exam /><span>超声 / UBM</span></label>
+                  <label class="check-pill"><input type="checkbox" value="其他" data-exam /><span>其他</span></label>
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="form-section">
+              <legend>辅助检查</legend>
+              <label class="field">检查所见<textarea id="auxExam" rows="3" placeholder="OCT、视野、UBM、造影、B 超等关键结果"></textarea></label>
+              <div class="attach-block">
+                <span class="field-label">报告图片或文件（可多选，图片会自动压缩）</span>
+                <input id="attachInput" class="attach-input" type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" />
+                <div id="attachList" class="attach-list"></div>
+              </div>
+            </fieldset>
+
+            <fieldset class="form-section">
+              <legend>处理与随访</legend>
+              <div class="form-grid form-grid-4">
+                <label class="field">治疗类型<select id="treatmentType"><option>保守治疗</option><option>手术治疗</option></select></label>
+              <label class="field">主刀医师<input id="surgeon" type="text" placeholder="如：张医生" /></label>
+              <label class="field span-2">治疗方式<select id="treatment"><option>观察</option><option>药物治疗</option><option>激光治疗</option><option>注射治疗</option><option>手术治疗</option><option>转诊</option><option>其他</option></select></label>
+                <label class="field span-2">标签<input id="recordTags" type="text" placeholder="用逗号分隔，如：典型病例, 教学" /></label>
+                <label class="field span-2">手术 / 操作名称<input id="surgeryName" type="text" placeholder="如：超声乳化白内障吸除术" /></label>
+                <label class="field">手术日期<input id="surgeryDate" type="date" /></label>
+                <label class="field">参与角色<select id="surgeryRole"><option>未记录</option><option>主刀</option><option>助手</option><option>观摩</option><option>协作</option></select></label>
+                <label class="field">麻醉方式<select id="anesthesia"><option>未记录</option><option>局麻</option><option>全麻</option><option>表面麻醉</option><option>局部联合</option></select></label>
+                <label class="field">下次随访<input id="followupDate" type="date" /></label>
+                <label class="field">是否再次入院<select id="readmission"><option>未记录</option><option>否</option><option>是</option></select></label>
+                <label class="field span-2">术后恢复<textarea id="postop" rows="2" placeholder="术后视力、眼压、切口、并发症"></textarea></label>
+              </div>
+              <label class="field">备注<textarea id="recordNotes" rows="2" placeholder="之后会用到的信息"></textarea></label>
+            </fieldset>
+
+            <fieldset class="form-section hidden" id="postExamSection">
+              <legend>术后查体（术眼）</legend>
+              <div class="exam-head">
+                <span class="exam-hint post-eye" id="postEyeHint">术眼：未明确</span>
+                <div class="exam-head-actions">
+                  <button type="button" class="mini-btn" id="postNormalAll">查体未见异常</button>
+                  <button type="button" class="mini-btn" id="postClearExam">清空</button>
+                </div>
+              </div>
+              <div class="exam-vitals exam-vitals-3">
+                <label class="vital">术后视力<input id="postVision" type="text" list="visionOptions" placeholder="0.8" /></label>
+                <label class="vital">术后验光<input id="postRefraction" type="text" list="refractionOptions" placeholder="-1.50" /></label>
+                <label class="vital">术后眼压<input id="postIop" type="text" list="iopOptions" placeholder="16" /></label>
+              </div>
+              <div id="postSegments" class="exam-segments"></div>
+              <label class="field">术后补充<textarea id="postExtra" rows="2" placeholder="切口、前房、并发症等"></textarea></label>
+            </fieldset>
+          </div>
+          <div class="modal-actions">
+            <button id="cancelModal" class="quiet-btn" type="button">取消</button>
+            <button class="primary-btn" type="submit">保存记录</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="detailModal" class="modal-backdrop hidden" aria-hidden="true">
+      <div class="modal-dialog detail-dialog" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+        <div class="modal-head">
+          <div>
+            <span class="section-kicker">病例详情</span>
+            <h2 id="detailTitle">病例详情</h2>
+          </div>
+          <button id="closeDetail" class="icon-btn close-btn" type="button" title="关闭">×</button>
+        </div>
+        <div id="detailContent" class="detail-content"></div>
+        <div class="modal-actions detail-actions">
+          <button id="editDetail" class="quiet-btn" type="button">编辑记录</button>
+          <button id="deleteDetail" class="danger-btn" type="button">删除记录</button>
+        </div>
+      </div>
+    </div>
+
+    <datalist id="visionOptions">
+      <option value="1.0"></option><option value="0.8"></option><option value="0.6"></option>
+      <option value="0.5"></option><option value="0.4"></option><option value="0.3"></option>
+      <option value="0.25"></option><option value="0.2"></option><option value="0.12"></option>
+      <option value="0.1"></option><option value="指数/眼前"></option><option value="手动"></option>
+      <option value="光感"></option><option value="无光感"></option>
+    </datalist>
+    <datalist id="refractionOptions">
+      <option value="平光"></option><option value="-1.00"></option><option value="-1.50"></option>
+      <option value="-2.00"></option><option value="-2.50"></option><option value="-3.00"></option>
+      <option value="-4.00"></option><option value="-6.00"></option><option value="-8.00"></option>
+      <option value="-10.00"></option><option value="+1.00"></option><option value="+2.00"></option>
+      <option value="-2.00/-0.50×180"></option><option value="-3.00/-0.75×90"></option>
+    </datalist>
+    <datalist id="iopOptions">
+      <option value="10"></option><option value="12"></option><option value="14"></option>
+      <option value="16"></option><option value="18"></option><option value="20"></option>
+      <option value="22"></option><option value="25"></option><option value="28"></option><option value="30"></option>
+    </datalist>
+  </body>
+</html>
