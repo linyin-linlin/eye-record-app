@@ -3413,9 +3413,11 @@ function createdValue(v) { if (!v) { return 0; } var n = new Date(v).getTime(); 
   }
   window.fetch = function (url, opt) {
     var u = String(url || "");
+    var path = u.replace(/^[a-z]+:\/\/[^/]+/i, "");
+    if (path.charAt(0) !== "/") { path = "/" + path; }
     var m = String((opt && opt.method) || "GET").toUpperCase();
     try {
-      if (u.indexOf("/api/ai/config") >= 0) {
+      if (path.indexOf("/api/ai/config") === 0) {
         if (m === "POST") {
           var sendBody = (opt && opt.body) || "{}";
           return realFetch(url, opt).catch(function () {
@@ -3440,7 +3442,7 @@ function createdValue(v) { if (!v) { return 0; } var n = new Date(v).getTime(); 
           return jres({ configured: false, local: true });
         });
       }
-      if (u.indexOf("/api/ai") >= 0) {
+      if (path.indexOf("/api/ai") === 0) {
         return realFetch(url, opt).catch(function () {
           var l = readLocal();
           if (!l || !l.key) { return jres({ ok: false, status: 0, error: "本机未保存 API Key" }); }
@@ -3448,7 +3450,7 @@ function createdValue(v) { if (!v) { return 0; } var n = new Date(v).getTime(); 
           return directAI(l, b);
         });
       }
-      if (u.indexOf("/api/records") >= 0) {
+      if (path.indexOf("/api/records") === 0) {
         return realFetch(url, opt).catch(function () { return jres({ ok: true, status: 200, offline: true }); });
       }
     } catch (e) {}
