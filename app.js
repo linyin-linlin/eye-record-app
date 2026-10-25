@@ -3457,3 +3457,47 @@ function createdValue(v) { if (!v) { return 0; } var n = new Date(v).getTime(); 
     return realFetch(url, opt);
   };
 })();
+
+/* ---------------- 第十六层：手机与电脑同步（记住电脑地址，自动把 api/* 转到电脑） ---------------- */
+(function () {
+  var LS = "pcSyncAddr_v1";
+  function getAddr() { try { return String(localStorage.getItem(LS) || "").replace(/\/+$/, ""); } catch (e) { return ""; } }
+  function setAddr(v) { try { localStorage.setItem(LS, String(v || "").replace(/\/+$/, "")); } catch (e) {} }
+  var rf = window.fetch ? window.fetch.bind(window) : null;
+  if (!rf) { return; }
+  function normPath(u) { var p = String(u).replace(/^[a-z]+:\/\/[^/]+/i, ""); if (p.charAt(0) !== "/") { p = "/" + p; } return p; }
+  window.fetch = function (url, opt) {
+    try {
+      var a = getAddr();
+      var u = String(url || "");
+      var p = normPath(u);
+      if (a && /^\/api\//.test(p) && u.indexOf(a) !== 0) {
+        var q = u.indexOf("?") >= 0 ? u.slice(u.indexOf("?")) : "";
+        return rf(a + p + q, opt);
+      }
+    } catch (e) {}
+    return rf(url, opt);
+  };
+  window.__pcSync = { get: getAddr, set: setAddr, test: function (addr) { return rf(String(addr).replace(/\/+$/, "") + "/api/records", { method: "GET" }).then(function (r) { return r.ok; }); } };
+  function mkBtn() {
+    try {
+      if (!document.body || document.getElementById("m16Sync")) { return; }
+      var b = document.createElement("button");
+      b.id = "m16Sync";
+      b.type = "button";
+      b.textContent = getAddr() ? "同步到电脑" : "设置电脑同步";
+      b.style.cssText = "position:fixed;right:12px;bottom:14px;z-index:99998;padding:10px 14px;border-radius:22px;border:0;background:#2f6fed;color:#fff;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.25)";
+      b.addEventListener("click", function () {
+        var cur = getAddr();
+        var v = window.prompt("请输入电脑的地址（启动服务时黑窗口里显示的那个，形如 http://192.168.1.23:4173）", cur || "http://");
+        if (v === null) { return; }
+        v = String(v).trim().replace(/\/+$/, "");
+        if (!v || v === "http:") { return; }
+        setAddr(v);
+        if (window.confirm("记住这个地址了。现在重新载入并与电脑同步？")) { location.reload(); }
+      });
+      document.body.appendChild(b);
+    } catch (e) {}
+  }
+  window.addEventListener("load", function () { setTimeout(mkBtn, 2000); setTimeout(mkBtn, 4500); });
+})();
