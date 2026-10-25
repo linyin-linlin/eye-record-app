@@ -3403,6 +3403,7 @@ function createdValue(v) { if (!v) { return 0; } var n = new Date(v).getTime(); 
   function readLocal() { try { return JSON.parse(localStorage.getItem(LS_KEY) || "null"); } catch (e) { return null; } }
   function writeLocal(o) { try { localStorage.setItem(LS_KEY, JSON.stringify(o)); } catch (e) {} }
   window.__localAiCfg = { read: readLocal, write: writeLocal };
+  function okOnly(p) { return p.then(function (r) { if (r && typeof r.status === "number" && (r.status < 200 || r.status >= 300)) { throw new Error("http " + r.status); } return r; }); }
   function directAI(cfg, body) {
     var payload = { model: cfg.model || "deepseek-chat", messages: (body && body.messages) || [], temperature: 0.2, stream: false };
     var url = cfg.base || "https://api.deepseek.com/v1/chat/completions";
@@ -3420,7 +3421,7 @@ function createdValue(v) { if (!v) { return 0; } var n = new Date(v).getTime(); 
       if (path.indexOf("/api/ai/config") === 0) {
         if (m === "POST") {
           var sendBody = (opt && opt.body) || "{}";
-          return realFetch(url, opt).catch(function () {
+          return okOnly(realFetch(url, opt)).catch(function () {
             try {
               var b = JSON.parse(sendBody); var cur = readLocal() || {};
               if (b.clearKey) { delete cur.key; } else { if (b.base) { cur.base = b.base; } if (b.model) { cur.model = b.model; } if (b.scope) { cur.scope = b.scope; } if (b.key) { cur.key = b.key; } }
@@ -3429,7 +3430,7 @@ function createdValue(v) { if (!v) { return 0; } var n = new Date(v).getTime(); 
             return jres({ ok: true, status: 200, local: true });
           });
         }
-        return realFetch(url, opt).then(function (r) {
+        return okOnly(realFetch(url, opt)).then(function (r) {
           return r.json().then(function (d) {
             if (d && d.configured) { return { ok: true, status: 200, json: function () { return Promise.resolve(d); } }; }
             var l = readLocal();
@@ -3443,7 +3444,7 @@ function createdValue(v) { if (!v) { return 0; } var n = new Date(v).getTime(); 
         });
       }
       if (path.indexOf("/api/ai") === 0) {
-        return realFetch(url, opt).catch(function () {
+        return okOnly(realFetch(url, opt)).catch(function () {
           var l = readLocal();
           if (!l || !l.key) { return jres({ ok: false, status: 0, error: "本机未保存 API Key" }); }
           var b = {}; try { b = JSON.parse((opt && opt.body) || "{}"); } catch (e) {}
@@ -3451,10 +3452,10 @@ function createdValue(v) { if (!v) { return 0; } var n = new Date(v).getTime(); 
         });
       }
       if (path.indexOf("/api/records") === 0) {
-        return realFetch(url, opt).catch(function () { return jres({ ok: true, status: 200, offline: true }); });
+        return okOnly(realFetch(url, opt)).catch(function () { return jres({ ok: true, status: 200, offline: true }); });
       }
     } catch (e) {}
-    return realFetch(url, opt);
+    return okOnly(realFetch(url, opt));
   };
 })();
 

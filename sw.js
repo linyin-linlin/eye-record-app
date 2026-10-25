@@ -1,4 +1,4 @@
-var CACHE = 'vision-logbook-v59';
+var CACHE = 'vision-logbook-v60';
 var SHELL = ['./', './index.html', './app.js', './styles.css', './manifest.webmanifest', './icon-192.png'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).catch(function () {}));

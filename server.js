@@ -96,7 +96,8 @@ function sendJson(response, status, payload) {
 }
 
 const server = http.createServer(function (request, response) {
-  const requestPath = decodeURIComponent(String(request.url || "/").split("?")[0]);
+  if (request.method === "OPTIONS") { response.writeHead(204, { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "content-type, authorization", "Access-Control-Allow-Methods": "GET, POST, OPTIONS" }); response.end(); return; }
+const requestPath = decodeURIComponent(String(request.url || "/").split("?")[0]);
 
   if (requestPath === "/api/records" || requestPath === "/api/records/") {
     if (request.method === "GET") { sendJson(response, 200, readStore()); return; }
