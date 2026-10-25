@@ -3481,6 +3481,20 @@ function createdValue(v) { if (!v) { return 0; } var n = new Date(v).getTime(); 
     } catch (e) {}
     return rf(url, opt);
   };
+  try {
+    var qs = String(location.search || "");
+    var pm = qs.match(/[?&]pc=([^&]+)/);
+    if (pm) {
+      var want = decodeURIComponent(pm[1]).replace(/\/+$/, "");
+      if (want && want !== getAddr()) {
+        setAddr(want);
+        try { history.replaceState(null, "", location.pathname); } catch (e) {}
+        setTimeout(function () { location.reload(); }, 300);
+        return;
+      }
+      try { history.replaceState(null, "", location.pathname); } catch (e) {}
+    }
+  } catch (e) {}
   window.__pcSync = { get: getAddr, set: setAddr, test: function (addr) { return rf(String(addr).replace(/\/+$/, "") + "/api/records", { method: "GET" }).then(function (r) { return r.ok; }); } };
   function mkBtn() {
     try {
@@ -3489,7 +3503,7 @@ function createdValue(v) { if (!v) { return 0; } var n = new Date(v).getTime(); 
       b.id = "m16Sync";
       b.type = "button";
       b.textContent = getAddr() ? "同步到电脑" : "设置电脑同步";
-      b.style.cssText = "position:fixed;right:12px;bottom:14px;z-index:99998;padding:10px 14px;border-radius:22px;border:0;background:#2f6fed;color:#fff;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.25)";
+      b.style.cssText = "position:fixed;right:12px;bottom:14px;z-index:2147483000;padding:10px 14px;border-radius:22px;border:0;background:#2f6fed;color:#fff;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.25)";
       b.addEventListener("click", function () {
         var cur = getAddr();
         var v = window.prompt("请输入电脑的地址（启动服务时黑窗口里显示的那个，形如 http://192.168.1.23:4173）", cur || "http://");
