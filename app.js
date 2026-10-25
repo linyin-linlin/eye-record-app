@@ -3417,6 +3417,8 @@ function createdValue(v) { if (!v) { return 0; } var n = new Date(v).getTime(); 
     var path = u.replace(/^[a-z]+:\/\/[^/]+/i, "");
     if (path.charAt(0) !== "/") { path = "/" + path; }
     var m = String((opt && opt.method) || "GET").toUpperCase();
+    var ai = path.indexOf("/api/");
+    if (ai > 0) { path = path.slice(ai); }
     try {
       if (path.indexOf("/api/ai/config") === 0) {
         if (m === "POST") {
